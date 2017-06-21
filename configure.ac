@@ -228,6 +228,9 @@ AC_ARG_WITH(pkg-extra-version,
 AC_ARG_WITH(pkg-git-version,
 	AS_HELP_STRING([--with-pkg-git-version], [add git information to MOTD and build version string]),
 	[ test "x$withval" != "xno" && with_pkg_git_version="yes" ])
+AC_ARG_WITH(vtysh_pager,
+	AS_HELP_STRING([--with-vtysh-pager=PAGER], [control what pager is compiled in as default]),
+	VTYSH_PAGER=$withval, VTYSH_PAGER="more")
 AC_ARG_ENABLE(vtysh,
   AS_HELP_STRING([--disable-vtysh], [do not build integrated vty shell for Quagga]))
 AC_ARG_ENABLE(doc,
@@ -248,6 +251,10 @@ AC_ARG_ENABLE(ldpd,
   AS_HELP_STRING([--enable-ldpd], [build ldpd]))
 AC_ARG_ENABLE(nhrpd,
   AS_HELP_STRING([--disable-nhrpd], [do not build nhrpd]))
+AC_ARG_ENABLE(eigrpd,
+  AS_HELP_STRING([--disable-eigrpd], [do not build eigrpd]))
+AC_ARG_ENABLE(babeld,
+  AS_HELP_STRING([--disable-babeld], [do not build babeld]))
 AC_ARG_ENABLE(watchfrr,
   AS_HELP_STRING([--disable-watchfrr], [do not build watchfrr]))
 AC_ARG_ENABLE(isisd,
@@ -307,18 +314,18 @@ AC_ARG_ENABLE(fpm,
   AS_HELP_STRING([--enable-fpm], [enable Forwarding Plane Manager support]))
 AC_ARG_ENABLE(systemd,
   AS_HELP_STRING([--enable-systemd], [enable Systemd support]))
-AC_ARG_ENABLE(poll,
-  AS_HELP_STRING([--enable-poll], [enable usage of Poll instead of select]))
 AC_ARG_ENABLE(werror,
   AS_HELP_STRING([--enable-werror], [enable -Werror (recommended for developers only)]))
 AC_ARG_ENABLE(cumulus,
   AS_HELP_STRING([--enable-cumulus], [enable Cumulus Switch Special Extensions]))
+AC_ARG_ENABLE(datacenter,
+  AS_HELP_STRING([--enable-datacenter], [enable Compilation for Data Center Extensions]))
 AC_ARG_ENABLE(rr-semantics,
   AS_HELP_STRING([--disable-rr-semantics], [disable the v6 Route Replace semantics]))
 AC_ARG_ENABLE([protobuf],
   AS_HELP_STRING([--enable-protobuf], [Enable experimental protobuf support]))
 AC_ARG_ENABLE([oldvpn_commands],
-  AS_HELP_STRING([--enable-old-vpn-commands], [Keep old vpn commands]))
+  AS_HELP_STRING([--enable-oldvpn-commands], [Keep old vpn commands]))
 
 AC_CHECK_HEADERS(json-c/json.h)
 AC_CHECK_LIB(json-c, json_object_get, LIBS="$LIBS -ljson-c")
@@ -357,21 +364,17 @@ if test "${enable_rr_semantics}" != "no" ; then
   AC_DEFINE(HAVE_V6_RR_SEMANTICS,, Compile in v6 Route Replacement Semantics)
 fi
 
-if test "${enable_poll}" = "yes" ; then
-  AC_DEFINE(HAVE_POLL,,Compile systemd support in)
-fi
-
 dnl ----------
 dnl MPLS check
 dnl ----------
 AC_MSG_CHECKING(whether this OS has MPLS stack)
 case "$host" in
   *-linux*)
-      MPLS_METHOD="zebra_mpls_netlink.o zebra_mpls.o"
+      MPLS_METHOD="zebra_mpls_netlink.o"
       AC_MSG_RESULT(Linux MPLS)
   ;;
   *-openbsd*)
-      MPLS_METHOD="zebra_mpls_openbsd.o zebra_mpls.o"
+      MPLS_METHOD="zebra_mpls_openbsd.o"
       AC_MSG_RESULT(OpenBSD MPLS)
   ;;
   *)
@@ -381,12 +384,17 @@ case "$host" in
 esac
 AC_SUBST(MPLS_METHOD)
 
-if test "${enable_cumulus}" = "yes" ; then
-  AC_DEFINE(HAVE_CUMULUS,,Compile Special Cumulus Code in)
+if test "${enable_datacenter}" = "yes" ; then
+  AC_DEFINE(HAVE_DATACENTER,,Compile extensions for a DataCenter)
   DFLT_NAME="datacenter"
 else
   DFLT_NAME="traditional"
 fi
+
+if test "${enable_cumulus}" = "yes" ; then
+  AC_DEFINE(HAVE_CUMULUS,,Compile Special Cumulus Code in)
+fi
+
 AC_SUBST(DFLT_NAME)
 AC_DEFINE_UNQUOTED(DFLT_NAME,["$DFLT_NAME"], Name of the configuration default set)
 
@@ -430,7 +438,7 @@ fi
 #
 # Logic for old vpn commans support.
 #
-if test "$enable_old_vpn_commands" = "yes"; then
+if test "$enable_oldvpn_commands" = "yes"; then
    AC_DEFINE(KEEP_OLD_VPN_COMMANDS,, [Define for compiling with old vpn commands])
 fi
 
@@ -522,6 +530,8 @@ case "${enable_multipath}" in
 esac
 
 AC_DEFINE_UNQUOTED(MULTIPATH_NUM, $MPATH_NUM, Maximum number of paths for a route)
+
+AC_DEFINE_UNQUOTED(VTYSH_PAGER, "$VTYSH_PAGER", [What pager to use])
 
 dnl -----------------------------------
 dnl Add extra version string to package
@@ -907,8 +917,7 @@ dnl other functions
 dnl ---------------
 AC_CHECK_FUNCS([ \
 	strlcat strlcpy \
-	getgrouplist \
-	pledge])
+	getgrouplist])
 
 AC_CHECK_HEADER([asm-generic/unistd.h],
                 [AC_CHECK_DECL(__NR_setns,
@@ -1275,14 +1284,6 @@ AM_CONDITIONAL(OSPFD, test "x$OSPFD" = "xospfd")
 if test "${enable_ldpd}" = "no";then
   LDPD=""
 else
-  AX_PROG_PERL_MODULES(XML::LibXML, , [
-    if test -f "${srcdir}/ldpd/ldp_vty_cmds.c"; then
-      AC_MSG_WARN([XML::LibXML perl module not found, using pregenerated ldp_vty_cmds.c])
-    else
-      AC_MSG_ERROR([XML::LibXML perl module not found and pregenerated ldp_vty_cmds.c missing])
-    fi
-  ])
-
   LDPD="ldpd"
   AC_DEFINE(HAVE_LDPD, 1, ldpd)
 fi
@@ -1299,6 +1300,13 @@ else
   fi
 fi
 AM_CONDITIONAL(NHRPD, test "x$NHRPD" = "xnhrpd")
+
+if test "${enable_eigrpd}" = "no";then
+  EIGRPD=""
+else
+  EIGRPD="eigrpd"
+fi
+AM_CONDITIONAL(EIGRPD, test "x$EIGRPD" = "xeigrpd")
 
 if test "${enable_watchfrr}" = "no";then
   WATCHFRR=""
@@ -1323,6 +1331,12 @@ case "${enable_ripngd}" in
   *    ) RIPNGD="ripngd";;
 esac
 AM_CONDITIONAL(RIPNGD, test "x$RIPNGD" = "xripngd")
+
+case "${enable_babeld}" in
+  "no" ) BABELD="";;
+  *    ) BABELD="babeld";;
+esac
+AM_CONDITIONAL(BABELD, test "x$BABELD" = "xbabeld")
 
 case "${enable_ospf6d}" in
   "no" ) OSPF6D="";;
@@ -1374,6 +1388,7 @@ AC_SUBST(ZEBRA)
 AC_SUBST(RFPTEST)
 AC_SUBST(LIBRFP)
 AC_SUBST(RFPINC)
+AC_SUBST(BABELD)
 AC_SUBST(BGPD)
 AC_SUBST(RIPD)
 AC_SUBST(RIPNGD)
@@ -1381,6 +1396,7 @@ AC_SUBST(OSPFD)
 AC_SUBST(OSPF6D)
 AC_SUBST(LDPD)
 AC_SUBST(NHRPD)
+AC_SUBST(EIGRPD)
 AC_SUBST(WATCHFRR)
 AC_SUBST(ISISD)
 AC_SUBST(PIMD)
@@ -1396,8 +1412,9 @@ dnl ---------------------------
 dnl check system has PCRE regexp
 dnl ---------------------------
 if test "x$enable_pcreposix" = "xyes"; then
-  AC_CHECK_LIB(pcreposix, pcreposix_regexec, ,[enable_pcreposix=no
-  AC_MSG_WARN([*** falling back to other regex library ***]) ])
+  AC_CHECK_LIB(pcreposix, regexec, [], [
+    AC_MSG_ERROR([--enable-pcreposix given but unable to find libpcreposix])
+  ])
 fi
 AC_SUBST(HAVE_LIBPCREPOSIX)
 
@@ -1492,6 +1509,8 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   AC_MSG_RESULT(no)
 ])
 
+
+AM_CONDITIONAL(SNMP, test "x$SNMP_METHOD" = "xagentx")
 
 dnl ---------------------------
 dnl sockaddr and netinet checks
@@ -1591,6 +1610,12 @@ AC_TRY_COMPILE([#include <netinet/in.h>], [
 ], [
   AC_MSG_RESULT(no)
 ])
+
+dnl --------------------------------------
+dnl checking for be32dec existence or not
+dnl --------------------------------------
+AC_CHECK_DECLS([be32enc, be32dec], [], [],
+	       [#include <sys/endian.h>])
 
 dnl --------------------------------------
 dnl checking for clock_time monotonic struct and call
@@ -1820,11 +1845,13 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  ripngd/Makefile bgpd/Makefile ospfd/Makefile watchfrr/Makefile
 	  ospf6d/Makefile ldpd/Makefile isisd/Makefile vtysh/Makefile
 	  doc/Makefile ospfclient/Makefile tests/Makefile m4/Makefile
+          bgpd/rfp-example/rfptest/Makefile bgpd/rfp-example/librfp/Makefile
+	  babeld/Makefile
 	  pimd/Makefile
+	  eigrpd/Makefile
 	  nhrpd/Makefile
 	  redhat/Makefile
 	  tools/Makefile
-	  cumulus/Makefile
 	  pkgsrc/Makefile
 	  fpm/Makefile
 	  redhat/frr.spec 
@@ -1840,6 +1867,7 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  doc/ospfd.8
 	  doc/ldpd.8
 	  doc/ripd.8
+	  doc/eigrpd.8
 	  doc/ripngd.8
 	  doc/pimd.8
 	  doc/nhrpd.8
@@ -1848,15 +1876,8 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  doc/zebra.8
 	  doc/frr.1
 	  pkgsrc/bgpd.sh pkgsrc/ospf6d.sh pkgsrc/ospfd.sh
-	  pkgsrc/ripd.sh pkgsrc/ripngd.sh pkgsrc/zebra.sh])
-
-if test "${enable_bgp_vnc}" != "no"; then
-   if test "${with_rfp_path}" = "bgpd/rfp-example" ; then 
-     AC_CONFIG_FILES([bgpd/rfp-example/rfptest/Makefile bgpd/rfp-example/librfp/Makefile])
-   else
-     AC_CONFIG_FILES([${with_rfp_path}/rfptest/Makefile ${with_rfp_path}/librfp/Makefile])
-   fi
-fi
+	  pkgsrc/ripd.sh pkgsrc/ripngd.sh pkgsrc/zebra.sh
+	  pkgsrc/eigrpd.sh])
 
 AC_CONFIG_FILES([solaris/Makefile])
 
