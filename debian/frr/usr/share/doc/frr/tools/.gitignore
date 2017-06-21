@@ -1,0 +1,9 @@
+.arch-inventory
+.arch-ids
+
+*~
+*.loT
+.libs
+*.o
+/permutations
+/ssd

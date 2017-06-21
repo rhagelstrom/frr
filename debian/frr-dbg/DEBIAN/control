@@ -1,0 +1,15 @@
+Package: frr-dbg
+Source: frr
+Version: 3.1.1.ATC
+Architecture: amd64
+Maintainer: Christian Hammers <ch@debian.org>
+Installed-Size: 12653
+Depends: frr (= 3.1.1.ATC)
+Section: debug
+Priority: extra
+Homepage: http://www.frr.net/
+Description: BGP/OSPF/RIP routing daemon (debug symbols)
+ This package provides debugging symbols for all binary packages built from
+ frr source package. It's highly recommended to have this package installed
+ before reporting any Frr crashes to either Frr developers or Debian
+ package maintainers.
