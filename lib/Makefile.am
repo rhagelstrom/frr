@@ -15,8 +15,9 @@ libfrr_la_LDFLAGS = -version-info 0:0:0
 
 libfrr_la_SOURCES = \
 	network.c pid_output.c getopt.c getopt1.c \
-	checksum.c vector.c linklist.c vty.c \
+	checksum.c vector.c linklist.c vty.c openbsd-tree.c \
 	graph.c command_parse.y command_lex.l command_match.c \
+	command_graph.c \
 	command.c \
 	sockunion.c prefix.c thread.c if.c buffer.c table.c hash.c \
 	filter.c routemap.c distribute.c stream.c log.c plist.c \
@@ -32,8 +33,11 @@ libfrr_la_SOURCES = \
 	libfrr.c \
 	strlcpy.c \
 	strlcat.c \
+	sha256.c \
 	module.c \
 	hook.c \
+	frr_pthread.c \
+	termtable.c \
 	# end
 
 BUILT_SOURCES = route_types.h gitversion.h command_parse.h command_lex.h
@@ -58,9 +62,10 @@ pkginclude_HEADERS = \
 	buffer.h checksum.h filter.h getopt.h hash.h \
 	if.h linklist.h log.h \
 	graph.h command_match.h \
+	command_graph.h \
 	command.h \
 	memory.h network.h prefix.h routemap.h distribute.h sockunion.h \
-	stream.h table.h thread.h vector.h version.h vty.h zebra.h \
+	stream.h table.h thread.h vector.h vty.h zebra.h \
 	plist.h zclient.h sockopt.h smux.h md5.h if_rmap.h keychain.h \
 	privs.h sigevent.h pqueue.h jhash.h zassert.h \
 	workqueue.h route_types.h libospf.h nexthop.h json.h \
@@ -74,6 +79,10 @@ pkginclude_HEADERS = \
 	module.h \
 	hook.h \
 	libfrr.h \
+	sha256.h \
+	frr_pthread.h \
+	vrf_int.h \
+	termtable.h \
 	# end
 
 noinst_HEADERS = \
