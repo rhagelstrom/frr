@@ -1845,6 +1845,7 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  ripngd/Makefile bgpd/Makefile ospfd/Makefile watchfrr/Makefile
 	  ospf6d/Makefile ldpd/Makefile isisd/Makefile vtysh/Makefile
 	  doc/Makefile ospfclient/Makefile tests/Makefile m4/Makefile
+          bgpd/rfp-example/rfptest/Makefile bgpd/rfp-example/librfp/Makefile
 	  babeld/Makefile
 	  pimd/Makefile
 	  eigrpd/Makefile
@@ -1878,13 +1879,6 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  pkgsrc/ripd.sh pkgsrc/ripngd.sh pkgsrc/zebra.sh
 	  pkgsrc/eigrpd.sh])
 
-if test "${enable_bgp_vnc}" != "no"; then
-   if test "${with_rfp_path}" = "bgpd/rfp-example" ; then 
-     AC_CONFIG_FILES([bgpd/rfp-example/rfptest/Makefile bgpd/rfp-example/librfp/Makefile])
-   else
-     AC_CONFIG_FILES([${with_rfp_path}/rfptest/Makefile ${with_rfp_path}/librfp/Makefile])
-   fi
-fi
 
 AC_CONFIG_FILES([solaris/Makefile])
 
