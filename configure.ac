@@ -7,7 +7,7 @@
 ##
 AC_PREREQ(2.60)
 
-AC_INIT(frr, 3.1.1-ATC, [https://github.com/frrouting/frr/issues])
+AC_INIT(frr, 3.1-dev, [https://github.com/frrouting/frr/issues])
 PACKAGE_URL="https://frrouting.org/"
 PACKAGE_FULLNAME="FRRouting"
 AC_SUBST(PACKAGE_FULLNAME)
@@ -251,6 +251,10 @@ AC_ARG_ENABLE(ldpd,
   AS_HELP_STRING([--enable-ldpd], [build ldpd]))
 AC_ARG_ENABLE(nhrpd,
   AS_HELP_STRING([--disable-nhrpd], [do not build nhrpd]))
+AC_ARG_ENABLE(eigrpd,
+  AS_HELP_STRING([--disable-eigrpd], [do not build eigrpd]))
+AC_ARG_ENABLE(babeld,
+  AS_HELP_STRING([--disable-babeld], [do not build babeld]))
 AC_ARG_ENABLE(watchfrr,
   AS_HELP_STRING([--disable-watchfrr], [do not build watchfrr]))
 AC_ARG_ENABLE(isisd,
@@ -1297,6 +1301,12 @@ else
 fi
 AM_CONDITIONAL(NHRPD, test "x$NHRPD" = "xnhrpd")
 
+if test "${enable_eigrpd}" = "no";then
+  EIGRPD=""
+else
+  EIGRPD="eigrpd"
+fi
+AM_CONDITIONAL(EIGRPD, test "x$EIGRPD" = "xeigrpd")
 
 if test "${enable_watchfrr}" = "no";then
   WATCHFRR=""
@@ -1386,6 +1396,7 @@ AC_SUBST(OSPFD)
 AC_SUBST(OSPF6D)
 AC_SUBST(LDPD)
 AC_SUBST(NHRPD)
+AC_SUBST(EIGRPD)
 AC_SUBST(WATCHFRR)
 AC_SUBST(ISISD)
 AC_SUBST(PIMD)
@@ -1864,6 +1875,14 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  pkgsrc/bgpd.sh pkgsrc/ospf6d.sh pkgsrc/ospfd.sh
 	  pkgsrc/ripd.sh pkgsrc/ripngd.sh pkgsrc/zebra.sh
 	  ])
+
+if test "${enable_bgp_vnc}" != "no"; then
+   if test "${with_rfp_path}" = "bgpd/rfp-example" ; then 
+     AC_CONFIG_FILES([bgpd/rfp-example/rfptest/Makefile bgpd/rfp-example/librfp/Makefile])
+   else
+     AC_CONFIG_FILES([${with_rfp_path}/rfptest/Makefile ${with_rfp_path}/librfp/Makefile])
+   fi
+fi
 
 AC_CONFIG_FILES([solaris/Makefile])
 
