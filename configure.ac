@@ -1847,6 +1847,7 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  doc/Makefile ospfclient/Makefile tests/Makefile m4/Makefile
           bgpd/rfp-example/rfptest/Makefile bgpd/rfp-example/librfp/Makefile
 	  pimd/Makefile
+	  eigrpd/Makefile
 	  nhrpd/Makefile
 	  redhat/Makefile
 	  tools/Makefile
