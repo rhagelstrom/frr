@@ -1865,7 +1865,6 @@ AC_CONFIG_FILES([Makefile lib/Makefile qpb/Makefile zebra/Makefile ripd/Makefile
 	  pkgsrc/ripd.sh pkgsrc/ripngd.sh pkgsrc/zebra.sh
 	  ])
 
-
 AC_CONFIG_FILES([solaris/Makefile])
 
 AC_CONFIG_FILES([vtysh/extract.pl],[chmod +x vtysh/extract.pl])
