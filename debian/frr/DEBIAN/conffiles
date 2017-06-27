@@ -1,8 +1,0 @@
-/etc/default/frr
-/etc/frr/daemons
-/etc/frr/daemons.conf
-/etc/frr/frr.conf
-/etc/frr/vtysh.conf
-/etc/iproute2/rt_protos.d/frr.conf
-/etc/logrotate.d/frr
-/etc/pam.d/frr
