@@ -814,7 +814,7 @@ vtysh_rl_describe (void)
                     fprintf (stdout, " %s", item);
                     XFREE (MTYPE_COMPLETION, item);
                   }
-                vty_out (vty, "%s", VTY_NEWLINE);
+                vty_out (vty, VTYNL);
               }
             vector_free (varcomps);
           }
@@ -2103,6 +2103,33 @@ DEFUN (vtysh_show_work_queues_daemon,
   return ret;
 }
 
+DEFUN (vtysh_show_hashtable,
+       vtysh_show_hashtable_cmd,
+       "show hashtable [statistics]",
+       SHOW_STR
+       "Statistics about hash tables\n"
+       "Statistics about hash tables\n")
+{
+  char cmd[] = "do show hashtable statistics";
+  unsigned long i;
+  int ret = CMD_SUCCESS;
+
+  fprintf (stdout, "\n");
+  fprintf (stdout, "Load factor (LF) - average number of elements across all buckets\n");
+  fprintf (stdout, "Full load factor (FLF) - average number of elements across full buckets\n\n");
+
+  fprintf (stdout, "Standard deviation (SD) is calculated for both the LF and FLF\n");
+  fprintf (stdout, "and indicates the typical deviation of bucket chain length\n");
+  fprintf (stdout, "from the value in the corresponding load factor.\n\n");
+
+  for (i = 0; i < array_size(vtysh_client); i++)
+    if ( vtysh_client[i].fd >= 0 ) {
+        ret = vtysh_client_execute (&vtysh_client[i], cmd, stdout);
+        fprintf (stdout, "\n");
+      }
+  return ret;
+}
+
 DEFUNSH (VTYSH_ZEBRA,
          vtysh_link_params,
          vtysh_link_params_cmd,
@@ -2502,10 +2529,9 @@ DEFUN (vtysh_write_terminal,
   else
     fp = stdout;
 
-  vty_out (vty, "Building configuration...%s", VTY_NEWLINE);
-  vty_out (vty, "%sCurrent configuration:%s", VTY_NEWLINE,
-           VTY_NEWLINE);
-  vty_out (vty, "!%s", VTY_NEWLINE);
+  vty_outln (vty, "Building configuration...");
+  vty_outln (vty, "%sCurrent configuration:",VTYNL);
+  vty_outln (vty, "!");
 
   for (i = 0; i < array_size(vtysh_client); i++)
     if ((argc < 3 ) || (strmatch (vtysh_client[i].name, argv[2]->text)))
@@ -2527,7 +2553,7 @@ DEFUN (vtysh_write_terminal,
       fp = NULL;
     }
 
-  vty_out (vty, "end%s", VTY_NEWLINE);
+  vty_outln (vty, "end");
   return CMD_SUCCESS;
 }
 
@@ -2760,7 +2786,7 @@ DEFUN (vtysh_terminal_length,
   lines = strtol (argv[idx_number]->arg, &endptr, 10);
   if (lines < 0 || lines > 512 || *endptr != '\0')
     {
-      vty_out (vty, "length is malformed%s", VTY_NEWLINE);
+      vty_outln (vty, "length is malformed");
       return CMD_WARNING;
     }
 
@@ -2807,7 +2833,7 @@ DEFUN (vtysh_show_daemons,
   for (i = 0; i < array_size(vtysh_client); i++)
     if ( vtysh_client[i].fd >= 0 )
       vty_out(vty, " %s", vtysh_client[i].name);
-  vty_out(vty, "%s", VTY_NEWLINE);
+  vty_out (vty, VTYNL);
 
   return CMD_SUCCESS;
 }
@@ -3575,6 +3601,8 @@ vtysh_init_vty (void)
 
   install_element (VIEW_NODE, &vtysh_show_work_queues_cmd);
   install_element (VIEW_NODE, &vtysh_show_work_queues_daemon_cmd);
+
+  install_element (VIEW_NODE, &vtysh_show_hashtable_cmd);
 
   install_element (VIEW_NODE, &vtysh_show_thread_cmd);
 

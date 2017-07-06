@@ -250,7 +250,7 @@ pim_instance_init (vrf_id_t vrf_id, afi_t afi)
   pim->spt.switchover = PIM_SPT_IMMEDIATE;
   pim->spt.plist = NULL;
 
-  pim->rpf_hash = hash_create_size (256, pim_rpf_hash_key, pim_rpf_equal);
+  pim->rpf_hash = hash_create_size (256, pim_rpf_hash_key, pim_rpf_equal, NULL);
 
   if (PIM_DEBUG_ZEBRA)
     zlog_debug ("%s: NHT rpf hash init ", __PRETTY_FUNCTION__);
@@ -313,6 +313,8 @@ void pim_init()
 
 void pim_terminate()
 {
+  struct zclient *zclient;
+
   pim_free();
 
   /* reverse prefix_list_init */
@@ -321,4 +323,11 @@ void pim_terminate()
   prefix_list_reset ();
 
   pim_vrf_terminate ();
+
+  zclient = pim_zebra_zclient_get ();
+  if (zclient)
+    {
+      zclient_stop (zclient);
+      zclient_free (zclient);
+    }
 }

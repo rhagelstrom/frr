@@ -215,7 +215,7 @@ cluster_unintern (struct cluster_list *cluster)
 static void
 cluster_init (void)
 {
-  cluster_hash = hash_create (cluster_hash_key_make, cluster_hash_cmp);
+  cluster_hash = hash_create (cluster_hash_key_make, cluster_hash_cmp, NULL);
 }
 
 static void
@@ -403,9 +403,9 @@ encap_hash_cmp (const void *p1, const void *p2)
 static void
 encap_init (void)
 {
-  encap_hash = hash_create (encap_hash_key_make, encap_hash_cmp);
+  encap_hash = hash_create (encap_hash_key_make, encap_hash_cmp, NULL);
 #if ENABLE_BGP_VNC
-  vnc_hash = hash_create (encap_hash_key_make, encap_hash_cmp);
+  vnc_hash = hash_create (encap_hash_key_make, encap_hash_cmp, NULL);
 #endif
 }
 
@@ -517,7 +517,7 @@ transit_hash_cmp (const void *p1, const void *p2)
 static void
 transit_init (void)
 {
-  transit_hash = hash_create (transit_hash_key_make, transit_hash_cmp);
+  transit_hash = hash_create (transit_hash_key_make, transit_hash_cmp, NULL);
 }
 
 static void
@@ -765,7 +765,7 @@ attrhash_cmp (const void *p1, const void *p2)
 static void
 attrhash_init (void)
 {
-  attrhash = hash_create (attrhash_key_make, attrhash_cmp);
+  attrhash = hash_create (attrhash_key_make, attrhash_cmp, "BGP Attributes");
 }
 
 /*
@@ -791,8 +791,8 @@ attr_show_all_iterator (struct hash_backet *backet, struct vty *vty)
 {
   struct attr *attr = backet->data;
 
-  vty_out (vty, "attr[%ld] nexthop %s%s", attr->refcnt, 
-	   inet_ntoa (attr->nexthop), VTY_NEWLINE);
+  vty_outln (vty, "attr[%ld] nexthop %s", attr->refcnt, 
+	   inet_ntoa(attr->nexthop));
 }
 
 void
